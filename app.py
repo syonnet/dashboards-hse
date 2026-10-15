@@ -75,55 +75,11 @@ else:
         index=0
     )
 
-    # PANEL DE CONEXIÓN M365 / ONEDRIVE
-    from gestor_m365 import obtener_config_fuentes, guardar_config_fuentes, obtener_excel_file
-    
-    with st.sidebar.expander("☁️ Conexión M365 / OneDrive", expanded=False):
-        st.markdown("<p style='font-size:0.8rem; color:#475569;'>Configura los enlaces de <b>SharePoint</b> o rutas de <b>OneDrive</b> para sincronización automática en vivo.</p>", unsafe_allow_html=True)
-        
-        cfg = obtener_config_fuentes()
-        
-        # Estado actual
-        _, _, estado_desemp = obtener_excel_file("hse_desempeno")
-        _, _, estado_proact = obtener_excel_file("hse_proactivos")
-        
-        st.markdown(f"""
-        <div style="background:#F1F5F9; border-radius:6px; padding:6px 10px; font-size:0.75rem; margin-bottom:10px;">
-            <b>Desempeño HSE:</b> <span style="color:#0284C7;">{estado_desemp}</span><br>
-            <b>Proactivos HSE:</b> <span style="color:#0284C7;">{estado_proact}</span>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        with st.form("form_fuentes_m365"):
-            st.markdown("<b style='font-size:0.78rem;'>1. Matriz Desempeño HSE (URL o Ruta):</b>", unsafe_allow_html=True)
-            url_desemp = st.text_input(
-                "HSE Desempeño",
-                value=cfg.get("hse_desempeno", {}).get("ruta_o_url", ""),
-                placeholder="https://empresa.sharepoint.com/... o C:\\Users\\...\\OneDrive",
-                label_visibility="collapsed"
-            )
-            
-            st.markdown("<b style='font-size:0.78rem;'>2. Control Proactivos HSE (URL o Ruta):</b>", unsafe_allow_html=True)
-            url_proact = st.text_input(
-                "HSE Proactivos",
-                value=cfg.get("hse_proactivos", {}).get("ruta_o_url", ""),
-                placeholder="https://empresa.sharepoint.com/... o C:\\Users\\...\\OneDrive",
-                label_visibility="collapsed"
-            )
-            
-            guardar_btn = st.form_submit_button("💾 Guardar Configuración", use_container_width=True)
-            if guardar_btn:
-                cfg["hse_desempeno"]["ruta_o_url"] = url_desemp.strip()
-                cfg["hse_proactivos"]["ruta_o_url"] = url_proact.strip()
-                guardar_config_fuentes(cfg)
-                st.cache_data.clear()
-                st.success("¡Configuración guardada y caché actualizada!")
-                st.rerun()
-
-        if st.button("🔄 Refrescar Datos (Caché M365)", use_container_width=True):
-            st.cache_data.clear()
-            st.toast("Datos recargados desde M365", icon="🔄")
-            st.rerun()
+    st.sidebar.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+    if st.sidebar.button("🔄 Actualizar Datos", use_container_width=True):
+        st.cache_data.clear()
+        st.toast("Datos actualizados", icon="🔄")
+        st.rerun()
 
     st.sidebar.caption("""
     ---
