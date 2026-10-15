@@ -90,6 +90,7 @@ else:
     carpeta_modulo = dashboards_disponibles[seleccion]
     try:
         modulo = importlib.import_module(f"{carpeta_modulo}.view")
+        modulo = importlib.reload(modulo)
         if hasattr(modulo, "render"):
             modulo.render()
         else:

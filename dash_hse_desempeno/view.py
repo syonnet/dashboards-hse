@@ -43,7 +43,7 @@ def render_gauge(val: float):
 def render():
     data_by_year, err = load_data()
     if err or not data_by_year:
-        st.error(f"⚠️ {err}")
+        st.error(f"⚠️ {err if err else 'No se pudieron procesar datos del archivo de SharePoint'}")
         return
 
     st.markdown("""

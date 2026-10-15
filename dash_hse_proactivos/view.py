@@ -43,7 +43,7 @@ def render_gauge(val: float):
 def render():
     df_ig, detalles, err = load_data()
     if err or df_ig is None:
-        st.error(f"⚠️ {err}")
+        st.error(f"⚠️ {err if err else 'No se pudieron procesar datos de Proactivos desde SharePoint'}")
         return
 
     st.markdown("""
