@@ -6,18 +6,21 @@ import streamlit as st
 
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config_fuentes.json")
 
+URL_OFICIAL_DESEMPENO = "https://triboilgas.sharepoint.com/:x:/g/conexpet/IQClFWM9Iy38Q6dCQcc8Zv5SAWukkxhAyJgK-Y6kgFFVZZE?e=Y508VH"
+URL_OFICIAL_PROACTIVOS = "https://triboilgas.sharepoint.com/:x:/g/conexpet/IQC9si9mkiwvR6ogIeeoXDweAQ31q6Y7ZB7xI-aLaUMi7qs?e=6LA1Fo"
+
 def obtener_config_fuentes():
     """Retorna la configuración de orígenes de datos (Local, OneDrive o SharePoint URL)."""
     default_config = {
         "hse_desempeno": {
             "descripcion": "Matriz de Indicadores HSE",
             "ruta_local_backup": os.path.join(os.path.dirname(os.path.abspath(__file__)), "dash_hse_desempeno", "data", "MATRIZ INDIC HSE.xlsx"),
-            "ruta_o_url": ""
+            "ruta_o_url": URL_OFICIAL_DESEMPENO
         },
         "hse_proactivos": {
             "descripcion": "Control de Indicadores Proactivos",
             "ruta_local_backup": os.path.join(os.path.dirname(os.path.abspath(__file__)), "dash_hse_proactivos", "data", "CONTROL INDICADORES PROACTIVOS.xlsx"),
-            "ruta_o_url": ""
+            "ruta_o_url": URL_OFICIAL_PROACTIVOS
         }
     }
     if os.path.exists(CONFIG_FILE):
@@ -31,10 +34,16 @@ def obtener_config_fuentes():
     # Soporte nativo para Streamlit Community Cloud (st.secrets)
     try:
         if hasattr(st, "secrets") and "m365" in st.secrets:
-            if "url_hse_desempeno" in st.secrets["m365"] and st.secrets["m365"]["url_hse_desempeno"]:
-                default_config["hse_desempeno"]["ruta_o_url"] = st.secrets["m365"]["url_hse_desempeno"]
-            if "url_hse_proactivos" in st.secrets["m365"] and st.secrets["m365"]["url_hse_proactivos"]:
-                default_config["hse_proactivos"]["ruta_o_url"] = st.secrets["m365"]["url_hse_proactivos"]
+            sec_desemp = str(st.secrets["m365"].get("url_hse_desempeno", "")).strip()
+            sec_proact = str(st.secrets["m365"].get("url_hse_proactivos", "")).strip()
+            # Proteger contra secretos duplicados o idénticos
+            if sec_desemp and sec_proact and sec_desemp != sec_proact:
+                default_config["hse_desempeno"]["ruta_o_url"] = sec_desemp
+                default_config["hse_proactivos"]["ruta_o_url"] = sec_proact
+            elif sec_desemp and not sec_proact:
+                default_config["hse_desempeno"]["ruta_o_url"] = sec_desemp
+            elif sec_proact and not sec_desemp:
+                default_config["hse_proactivos"]["ruta_o_url"] = sec_proact
     except Exception:
         pass
 
@@ -120,18 +129,13 @@ def obtener_excel_file(modulo_key: str):
                     res.seek(0)
                 return res, None, desc
             
-            # Si las hojas no corresponden, probar la fuente alterna (intercambiada)
-            otro_key = "hse_proactivos" if modulo_key == "hse_desempeno" else "hse_desempeno"
-            fuente_alterna = cfg.get(otro_key, {}).get("ruta_o_url", "").strip()
-            backup_alterno = cfg.get(otro_key, {}).get("ruta_local_backup", "")
-            if backup_alterno and not os.path.isabs(backup_alterno):
-                backup_alterno = os.path.join(os.path.dirname(os.path.abspath(__file__)), backup_alterno)
-            
-            res_alt, err_alt, desc_alt = descargar_desde_fuente(fuente_alterna, backup_alterno)
-            if not err_alt and res_alt is not None:
-                if hasattr(res_alt, 'seek'):
-                    res_alt.seek(0)
-                return res_alt, None, f"{desc_alt} (Auto-corregido)"
+            # Si el archivo no corresponde al módulo solicitado, descargar de la URL oficial garantizada
+            url_oficial = URL_OFICIAL_DESEMPENO if modulo_key == "hse_desempeno" else URL_OFICIAL_PROACTIVOS
+            res_oficial, err_of, desc_of = descargar_desde_fuente(url_oficial, backup_solicitado)
+            if not err_of and res_oficial is not None:
+                if hasattr(res_oficial, 'seek'):
+                    res_oficial.seek(0)
+                return res_oficial, None, "SharePoint Online (En vivo)"
         except Exception:
             pass
             
