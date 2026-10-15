@@ -2,11 +2,11 @@
     "hse_desempeno": {
         "descripcion": "Matriz de Indicadores HSE",
         "ruta_local_backup": "dash_hse_desempeno/data/MATRIZ INDIC HSE.xlsx",
-        "ruta_o_url": "https://triboilgas.sharepoint.com/:x:/g/conexpet/IQC9si9mkiwvR6ogIeeoXDweAQ31q6Y7ZB7xI-aLaUMi7qs?e=TfIZMz"
+        "ruta_o_url": "https://triboilgas.sharepoint.com/:x:/g/conexpet/IQClFWM9Iy38Q6dCQcc8Zv5SAWukkxhAyJgK-Y6kgFFVZZE?e=Y508VH"
     },
     "hse_proactivos": {
         "descripcion": "Control de Indicadores Proactivos",
         "ruta_local_backup": "dash_hse_proactivos/data/CONTROL INDICADORES PROACTIVOS.xlsx",
-        "ruta_o_url": "https://triboilgas.sharepoint.com/:x:/g/conexpet/IQC9si9mkiwvR6ogIeeoXDweAQ31q6Y7ZB7xI-aLaUMi7qs?e=TfIZMz"
+        "ruta_o_url": "https://triboilgas.sharepoint.com/:x:/g/conexpet/IQC9si9mkiwvR6ogIeeoXDweAQ31q6Y7ZB7xI-aLaUMi7qs?e=6LA1Fo"
     }
 }
