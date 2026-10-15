@@ -22,7 +22,7 @@ def load_data():
     except Exception as e:
         return None, f"Error al abrir Excel ({source_desc}): {e}"
 
-    hojas = [h for h in xl.sheet_names if 'INDICADORES HSE' in h]
+    hojas = [h for h in xl.sheet_names if ('INDICADORES HSE' in h.upper() or 'MATRIZ' in h.upper() or 'HSE' in h.upper()) and 'GRAF' not in h.upper()]
     if not hojas:
         return None, f"No se encontró hoja 'INDICADORES HSE' en el archivo ({source_desc}). Hojas existentes: {xl.sheet_names}"
 

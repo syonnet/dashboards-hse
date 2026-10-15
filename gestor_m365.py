@@ -44,24 +44,17 @@ def guardar_config_fuentes(config: dict):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4, ensure_ascii=False)
 
-def obtener_excel_file(modulo_key: str):
-    """
-    Obtiene el archivo Excel ya sea desde:
-    1. Una URL directa de SharePoint/OneDrive (?download=1)
-    2. Una ruta sincronizada de OneDrive configurada o auto-detectada
-    3. La carpeta local data/ del módulo como respaldo seguro.
-    """
-    cfg = obtener_config_fuentes().get(modulo_key, {})
-    fuente = cfg.get("ruta_o_url", "").strip()
-    backup_path = cfg.get("ruta_local_backup", "")
-    if backup_path and not os.path.isabs(backup_path):
-        backup_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), backup_path)
+def descargar_desde_fuente(fuente_url_o_path: str, backup_path: str):
+    """Descarga o abre el archivo Excel desde una URL o ruta local."""
+    if not fuente_url_o_path:
+        if backup_path and os.path.exists(backup_path):
+            return backup_path, None, "Respaldo local"
+        return None, "No se configuró URL ni ruta", "No configurado"
 
-    # Caso 1: Es una URL web de SharePoint o OneDrive
-    if fuente.startswith("http://") or fuente.startswith("https://"):
+    if fuente_url_o_path.startswith("http://") or fuente_url_o_path.startswith("https://"):
         try:
-            url_descarga = fuente
-            if "sharepoint.com" in fuente or "onedrive" in fuente:
+            url_descarga = fuente_url_o_path
+            if "sharepoint.com" in fuente_url_o_path or "onedrive" in fuente_url_o_path:
                 if "download=1" not in url_descarga:
                     sep = "&" if "?" in url_descarga else "?"
                     url_descarga = f"{url_descarga}{sep}download=1"
@@ -75,26 +68,87 @@ def obtener_excel_file(modulo_key: str):
             resp = opener.open(url_descarga, timeout=20)
             content = resp.read()
 
-            # Validar que sea un archivo Excel binario real (.xlsx inicia con cabecera ZIP b'PK')
             if content.startswith(b'PK'):
                 import io
                 return io.BytesIO(content), None, "SharePoint Online (En vivo)"
             else:
-                msg_aviso = "El vínculo de SharePoint entregó página web. Se activó el respaldo local."
-                if os.path.exists(backup_path):
-                    return backup_path, None, f"Respaldo local ({msg_aviso})"
+                if backup_path and os.path.exists(backup_path):
+                    return backup_path, None, "Respaldo local (SharePoint entregó página web)"
                 return None, "El enlace de SharePoint no entregó un archivo Excel binario.", "Error de formato"
         except Exception as e:
-            if os.path.exists(backup_path):
+            if backup_path and os.path.exists(backup_path):
                 return backup_path, None, f"Respaldo local (Fallo conexión M365: {e})"
             return None, f"Error descargando desde SharePoint: {e}", "Error"
 
-    # Caso 2: Es una ruta de archivo local de OneDrive configurada explícitamente
-    if fuente and os.path.exists(fuente):
-        return fuente, None, f"OneDrive Sincronizado ({os.path.basename(fuente)})"
+    if os.path.exists(fuente_url_o_path):
+        return fuente_url_o_path, None, f"Archivo sincronizado ({os.path.basename(fuente_url_o_path)})"
 
-    # Caso 3: Backup local dentro de la carpeta del módulo
-    if os.path.exists(backup_path):
+    if backup_path and os.path.exists(backup_path):
         return backup_path, None, "Carpeta local del proyecto"
 
-    return None, f"No se encontró archivo para {modulo_key}", "No encontrado"
+    return None, f"No se encontró archivo en {fuente_url_o_path}", "No encontrado"
+
+def obtener_excel_file(modulo_key: str):
+    """
+    Obtiene el archivo Excel correspondiente a cada módulo.
+    Detecta automáticamente si los enlaces de SharePoint están intercambiados
+    analizando las hojas del Excel.
+    """
+    cfg = obtener_config_fuentes()
+    
+    fuente_solicitada = cfg.get(modulo_key, {}).get("ruta_o_url", "").strip()
+    backup_solicitado = cfg.get(modulo_key, {}).get("ruta_local_backup", "")
+    if backup_solicitado and not os.path.isabs(backup_solicitado):
+        backup_solicitado = os.path.join(os.path.dirname(os.path.abspath(__file__)), backup_solicitado)
+
+    # 1. Intentar con la fuente configurada para este módulo
+    res, err, desc = descargar_desde_fuente(fuente_solicitada, backup_solicitado)
+    if not err and res is not None:
+        try:
+            xl = pd.ExcelFile(res, engine='openpyxl')
+            hojas = [str(h).upper() for h in xl.sheet_names]
+            
+            es_desempeno = any('INDICADORES HSE' in h or 'MATRIZ' in h for h in hojas)
+            es_proactivos = any('ART' in h or 'OPAS' in h or 'GEST' in h or 'PROACT' in h for h in hojas)
+            
+            if modulo_key == "hse_desempeno" and es_desempeno:
+                if hasattr(res, 'seek'):
+                    res.seek(0)
+                return res, None, desc
+            elif modulo_key == "hse_proactivos" and es_proactivos:
+                if hasattr(res, 'seek'):
+                    res.seek(0)
+                return res, None, desc
+            
+            # Si las hojas no corresponden, probar la fuente alterna (intercambiada)
+            otro_key = "hse_proactivos" if modulo_key == "hse_desempeno" else "hse_desempeno"
+            fuente_alterna = cfg.get(otro_key, {}).get("ruta_o_url", "").strip()
+            backup_alterno = cfg.get(otro_key, {}).get("ruta_local_backup", "")
+            if backup_alterno and not os.path.isabs(backup_alterno):
+                backup_alterno = os.path.join(os.path.dirname(os.path.abspath(__file__)), backup_alterno)
+            
+            res_alt, err_alt, desc_alt = descargar_desde_fuente(fuente_alterna, backup_alterno)
+            if not err_alt and res_alt is not None:
+                if hasattr(res_alt, 'seek'):
+                    res_alt.seek(0)
+                return res_alt, None, f"{desc_alt} (Auto-corregido)"
+        except Exception:
+            pass
+            
+        if hasattr(res, 'seek'):
+            res.seek(0)
+        return res, None, desc
+
+    # 2. Si falló la fuente principal, intentar con la alterna
+    otro_key = "hse_proactivos" if modulo_key == "hse_desempeno" else "hse_desempeno"
+    fuente_alterna = cfg.get(otro_key, {}).get("ruta_o_url", "").strip()
+    backup_alterno = cfg.get(otro_key, {}).get("ruta_local_backup", "")
+    if backup_alterno and not os.path.isabs(backup_alterno):
+        backup_alterno = os.path.join(os.path.dirname(os.path.abspath(__file__)), backup_alterno)
+    res_alt, err_alt, desc_alt = descargar_desde_fuente(fuente_alterna, backup_alterno)
+    if not err_alt and res_alt is not None:
+        if hasattr(res_alt, 'seek'):
+            res_alt.seek(0)
+        return res_alt, None, f"{desc_alt} (Fuente alternativa)"
+
+    return None, f"No se pudo cargar archivo para {modulo_key}: {err}", "Error"

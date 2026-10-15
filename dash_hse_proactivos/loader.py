@@ -22,7 +22,7 @@ def load_data():
     except Exception as e:
         return None, None, f"Error al abrir Excel ({source_desc}): {e}"
 
-    hojas_gest = [h for h in xl.sheet_names if 'GEST' in h.upper()]
+    hojas_gest = [h for h in xl.sheet_names if 'GEST' in h.upper() or 'INDICE' in h.upper() or 'IG' in h.upper()]
     if not hojas_gest:
         return None, None, f"No se encontró hoja de Gestión en el archivo ({source_desc})"
     hoja_ig = hojas_gest[0]
