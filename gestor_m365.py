@@ -66,22 +66,24 @@ def obtener_excel_file(modulo_key: str):
                     sep = "&" if "?" in url_descarga else "?"
                     url_descarga = f"{url_descarga}{sep}download=1"
             
-            req = urllib.request.Request(
-                url_descarga, 
-                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-            )
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                content = resp.read()
-                # Validar que sea un archivo Excel binario real (.xlsx inicia con cabecera ZIP b'PK')
-                if content.startswith(b'PK'):
-                    import io
-                    return io.BytesIO(content), None, "SharePoint / OneDrive (Nube M365)"
-                else:
-                    # SharePoint devolvió página HTML (login de Microsoft o acceso restringido)
-                    msg_aviso = "El vínculo de SharePoint requiere inicio de sesión en navegador (SSO). Se activó el respaldo local."
-                    if os.path.exists(backup_path):
-                        return backup_path, None, f"Respaldo local ({msg_aviso})"
-                    return None, f"El enlace proporcionado no entregó un archivo Excel (entregó página web HTML). Asegúrese de otorgar acceso 'Cualquier persona con el vínculo puede ver'.", "Acceso denegado M365"
+            import http.cookiejar
+            cj = http.cookiejar.CookieJar()
+            opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+            opener.addheaders = [
+                ('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+            ]
+            resp = opener.open(url_descarga, timeout=20)
+            content = resp.read()
+
+            # Validar que sea un archivo Excel binario real (.xlsx inicia con cabecera ZIP b'PK')
+            if content.startswith(b'PK'):
+                import io
+                return io.BytesIO(content), None, "SharePoint Online (En vivo)"
+            else:
+                msg_aviso = "El vínculo de SharePoint entregó página web. Se activó el respaldo local."
+                if os.path.exists(backup_path):
+                    return backup_path, None, f"Respaldo local ({msg_aviso})"
+                return None, "El enlace de SharePoint no entregó un archivo Excel binario.", "Error de formato"
         except Exception as e:
             if os.path.exists(backup_path):
                 return backup_path, None, f"Respaldo local (Fallo conexión M365: {e})"
