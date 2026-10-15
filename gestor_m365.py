@@ -72,8 +72,16 @@ def obtener_excel_file(modulo_key: str):
             )
             with urllib.request.urlopen(req, timeout=15) as resp:
                 content = resp.read()
-                import io
-                return io.BytesIO(content), None, "SharePoint / OneDrive (Nube M365)"
+                # Validar que sea un archivo Excel binario real (.xlsx inicia con cabecera ZIP b'PK')
+                if content.startswith(b'PK'):
+                    import io
+                    return io.BytesIO(content), None, "SharePoint / OneDrive (Nube M365)"
+                else:
+                    # SharePoint devolvió página HTML (login de Microsoft o acceso restringido)
+                    msg_aviso = "El vínculo de SharePoint requiere inicio de sesión en navegador (SSO). Se activó el respaldo local."
+                    if os.path.exists(backup_path):
+                        return backup_path, None, f"Respaldo local ({msg_aviso})"
+                    return None, f"El enlace proporcionado no entregó un archivo Excel (entregó página web HTML). Asegúrese de otorgar acceso 'Cualquier persona con el vínculo puede ver'.", "Acceso denegado M365"
         except Exception as e:
             if os.path.exists(backup_path):
                 return backup_path, None, f"Respaldo local (Fallo conexión M365: {e})"

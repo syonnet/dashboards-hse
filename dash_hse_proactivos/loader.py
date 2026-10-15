@@ -17,8 +17,15 @@ def load_data():
     if err or excel_source is None:
         return None, None, err
 
-    xl = pd.ExcelFile(excel_source)
-    hoja_ig = [h for h in xl.sheet_names if 'GEST' in h.upper()][0]
+    try:
+        xl = pd.ExcelFile(excel_source, engine='openpyxl')
+    except Exception as e:
+        return None, None, f"Error al abrir Excel ({source_desc}): {e}"
+
+    hojas_gest = [h for h in xl.sheet_names if 'GEST' in h.upper()]
+    if not hojas_gest:
+        return None, None, f"No se encontró hoja de Gestión en el archivo ({source_desc})"
+    hoja_ig = hojas_gest[0]
     df_raw = xl.parse(hoja_ig, header=None)
 
     header_idx = None

@@ -17,7 +17,11 @@ def load_data():
     if err or excel_source is None:
         return None, err
 
-    xl = pd.ExcelFile(excel_source)
+    try:
+        xl = pd.ExcelFile(excel_source, engine='openpyxl')
+    except Exception as e:
+        return None, f"Error al abrir Excel ({source_desc}): {e}"
+
     hojas = [h for h in xl.sheet_names if 'INDICADORES HSE' in h]
     data_by_year = {}
     patron_col = re.compile(r'^(TBG|BV|CNX|CSH|TUR)\s*[\n\s]*(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)$', re.IGNORECASE)
