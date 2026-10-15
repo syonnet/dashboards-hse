@@ -23,24 +23,41 @@ def load_data():
         return None, f"Error al abrir Excel ({source_desc}): {e}"
 
     hojas = [h for h in xl.sheet_names if 'INDICADORES HSE' in h]
+    if not hojas:
+        return None, f"No se encontró hoja 'INDICADORES HSE' en el archivo ({source_desc}). Hojas existentes: {xl.sheet_names}"
+
     data_by_year = {}
     patron_col = re.compile(r'^(TBG|BV|CNX|CSH|TUR)\s*[\n\s]*(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)$', re.IGNORECASE)
 
     for hoja in hojas:
         anio_match = re.search(r'20\d{2}', hoja)
         anio = anio_match.group(0) if anio_match else '2026'
-        header_row = 5 if '2026' in hoja else 4
-        try:
-            df = xl.parse(hoja, header=header_row)
-        except Exception:
+        
+        # Probar automáticamente la fila de encabezado correcta
+        df = None
+        for hr in [5, 4, 3, 2, 6]:
+            try:
+                candidate = xl.parse(hoja, header=hr)
+                cols = [str(c).strip().replace('\n', ' ') for c in candidate.columns if pd.notna(c)]
+                if any('SUB-PROCESO' in c or 'SUBPROCESO' in c for c in cols) and any('INDICADOR' in c for c in cols):
+                    df = candidate
+                    break
+            except Exception:
+                continue
+
+        if df is None:
             continue
 
-        if 'SUB-PROCESO' not in df.columns or 'INDICADOR PLANTEADO' not in df.columns:
+        col_subproc = next((c for c in df.columns if 'SUB' in str(c).upper() and 'PROC' in str(c).upper()), None)
+        col_ind = next((c for c in df.columns if 'INDICADOR' in str(c).upper() and 'PLANT' in str(c).upper()), None)
+        if not col_subproc or not col_ind:
             continue
 
-        df['SUB-PROCESO'] = df['SUB-PROCESO'].ffill()
-        df = df.dropna(subset=['INDICADOR PLANTEADO'])
-        meta_col = f'META {anio}' if f'META {anio}' in df.columns else ('META 2026' if 'META 2026' in df.columns else 'META 2025')
+        df[col_subproc] = df[col_subproc].ffill()
+        df = df.dropna(subset=[col_ind])
+        meta_col = next((c for c in df.columns if f'META {anio}' in str(c).upper()), None)
+        if not meta_col:
+            meta_col = next((c for c in df.columns if 'META' in str(c).upper()), None)
 
         records = []
         for col in df.columns:
@@ -52,9 +69,9 @@ def load_data():
                 for _, row in df.iterrows():
                     val = row[col]
                     if pd.notna(val) and isinstance(val, (int, float)):
-                        ind_nombre = str(row['INDICADOR PLANTEADO']).strip().replace('\n', ' ')
-                        abrev = str(row['ABREVIATURA']).strip().replace('\n', ' ') if pd.notna(row.get('ABREVIATURA')) else ''
-                        subproc = str(row['SUB-PROCESO']).strip().replace('\n', ' ')
+                        ind_nombre = str(row[col_ind]).strip().replace('\n', ' ')
+                        abrev = str(row['ABREVIATURA']).strip().replace('\n', ' ') if 'ABREVIATURA' in row and pd.notna(row.get('ABREVIATURA')) else ''
+                        subproc = str(row[col_subproc]).strip().replace('\n', ' ')
                         meta_str = str(row[meta_col]).strip() if meta_col in row and pd.notna(row[meta_col]) else '≥ 80%'
 
                         cumple, pct_cumpl = evaluar_meta(ind_nombre, abrev, meta_str, float(val))
@@ -72,6 +89,9 @@ def load_data():
                         })
         if records:
             data_by_year[anio] = pd.DataFrame(records)
+
+    if not data_by_year:
+        return None, f"El archivo de SharePoint ({source_desc}) se abrió, pero no se encontraron filas de métricas con formato TBG/BV/CNX/CSH/TUR ENE-DIC."
 
     meses_orden = {'ENE': 1, 'FEB': 2, 'MAR': 3, 'ABR': 4, 'MAY': 5, 'JUN': 6,
                    'JUL': 7, 'AGO': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DIC': 12}
