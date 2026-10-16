@@ -3,10 +3,11 @@ import sys
 import importlib
 import streamlit as st
 
+from iconos import icon_building
+
 # Configuración de la aplicación
 st.set_page_config(
     page_title="Portal de Dashboards Ejecutivos",
-    page_icon="🏢",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -37,8 +38,8 @@ def descubrir_dashboards():
     y que contengan un módulo view.py con la función render().
     """
     nombres_personalizados = {
-        "dash_hse_desempeno": "🛡️ HSE Desempeño Operativo",
-        "dash_hse_proactivos": "⚡ HSE Indicadores Proactivos"
+        "dash_hse_desempeno": "HSE Desempeño Operativo",
+        "dash_hse_proactivos": "HSE Indicadores Proactivos"
     }
 
     modulos = {}
@@ -47,17 +48,17 @@ def descubrir_dashboards():
         if os.path.isdir(full_path) and entry.startswith("dash_"):
             view_path = os.path.join(full_path, "view.py")
             if os.path.exists(view_path):
-                label = nombres_personalizados.get(entry, f"📊 {entry.replace('dash_', '').replace('_', ' ').title()}")
+                label = nombres_personalizados.get(entry, entry.replace('dash_', '').replace('_', ' ').title())
                 modulos[label] = entry
     return modulos
 
 dashboards_disponibles = descubrir_dashboards()
 
 # BARRA LATERAL
-st.sidebar.markdown("""
+st.sidebar.markdown(f"""
     <div style="padding: 0.5rem 0 1rem 0; border-bottom: 1px solid #E2E8F0; margin-bottom: 1rem;">
-        <h3 style="color: #0F2942; margin: 0; font-size: 1.15rem; font-weight: 800; letter-spacing: -0.3px;">
-            🏢 PORTAL DE REPORTES
+        <h3 style="color: #0F2942; margin: 0; font-size: 1.15rem; font-weight: 800; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px;">
+            {icon_building('#0F2942', 20)} PORTAL DE REPORTES
         </h3>
         <p style="color: #64748B; font-size: 0.78rem; margin: 2px 0 0 0;">
             Tableros de Control Ejecutivos
@@ -70,15 +71,15 @@ if not dashboards_disponibles:
     st.info("Crea una carpeta `dash_[nombre]` con su archivo `view.py` para visualizarlo aquí.")
 else:
     seleccion = st.sidebar.radio(
-        "Selecciona el Dashboard:",
+        "Seleccionar Dashboard:",
         list(dashboards_disponibles.keys()),
         index=0
     )
 
     st.sidebar.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
-    if st.sidebar.button("🔄 Actualizar Datos", use_container_width=True):
+    if st.sidebar.button("Actualizar Datos", use_container_width=True):
         st.cache_data.clear()
-        st.toast("Datos actualizados", icon="🔄")
+        st.toast("Datos actualizados exitosamente")
         st.rerun()
 
     st.sidebar.caption("""

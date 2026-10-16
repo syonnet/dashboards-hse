@@ -5,6 +5,10 @@ import plotly.graph_objects as go
 import pandas as pd
 from .loader import load_data, get_modified_date
 from exportador_html import generar_html_ejecutivo
+from iconos import (
+    icon_activity, icon_shield_check, icon_alert_circle,
+    icon_check_circle, icon_truck, icon_award, icon_info
+)
 
 def render_gauge(val: float):
     val_clamped = max(0.0, min(100.0, float(val)))
@@ -43,7 +47,7 @@ def render_gauge(val: float):
 def render():
     data_by_year, err = load_data()
     if err or not data_by_year:
-        st.error(f"⚠️ {err if err else 'No se pudieron procesar datos del archivo de SharePoint'}")
+        st.error(f"{err if err else 'No se pudieron procesar datos del archivo de SharePoint'}")
         return
 
     st.markdown("""
@@ -165,9 +169,9 @@ def render():
             </div>
         """, unsafe_allow_html=True)
     with col_h2:
-        btn_col, txt_col = st.columns([1, 3])
+        btn_col, txt_col = st.columns([1.2, 2.8])
         with btn_col:
-            if st.button("🔄", key="ref_desempeno", help="Recargar datos de MATRIZ INDIC HSE.xlsx"):
+            if st.button("Actualizar", key="ref_desempeno", help="Recargar datos de SharePoint"):
                 st.cache_data.clear()
                 st.rerun()
         with txt_col:
@@ -183,7 +187,7 @@ def render():
     with st.container(border=True):
         fc1, fc2, fc3, fc4 = st.columns([1, 1, 1.2, 1.6])
         with fc1:
-            sel_anio = st.selectbox("📅 Año", anios_disp, index=0, key="des_anio")
+            sel_anio = st.selectbox("Año", anios_disp, index=0, key="des_anio")
             df_year = data_by_year.get(sel_anio, pd.DataFrame())
 
         meses_orden = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC']
@@ -191,15 +195,15 @@ def render():
         sel_mes_default = len(meses_disp) - 1 if meses_disp else 0
 
         with fc2:
-            sel_mes = st.selectbox("🗓️ Mes de Corte", meses_disp, index=sel_mes_default, key="des_mes")
+            sel_mes = st.selectbox("Mes de Corte", meses_disp, index=sel_mes_default, key="des_mes")
 
         bases_disp = ["Todas las Bases"] + sorted(list(df_year['base'].unique()))
         with fc3:
-            sel_base = st.selectbox("📍 Base / Locación", bases_disp, index=0, key="des_base")
+            sel_base = st.selectbox("Base / Locación", bases_disp, index=0, key="des_base")
 
         subproc_disp = ["Todos los Subprocesos"] + sorted(list(df_year['subproceso'].unique()))
         with fc4:
-            sel_subproc = st.selectbox("📑 Subproceso / Área", subproc_disp, index=0, key="des_subproc")
+            sel_subproc = st.selectbox("Subproceso / Área", subproc_disp, index=0, key="des_subproc")
 
     # FILTRADO DINÁMICO EN CASCADA
     df_scope = df_year.copy()
@@ -244,7 +248,7 @@ def render():
         with r1_c1:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #E0F2FE; color: #0284C7;">📄</div>
+                    <div class="mini-icon" style="background: #E0F2FE;">{icon_activity('#0284C7', 20)}</div>
                     <div>
                         <div class="mini-title">Índice Frecuencia (IF)</div>
                         <div class="mini-value">{if_val:.2f}</div>
@@ -254,7 +258,7 @@ def render():
         with r1_c2:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #FEF3C7; color: #D97706;">🛡️</div>
+                    <div class="mini-icon" style="background: #FEF3C7;">{icon_shield_check('#D97706', 20)}</div>
                     <div>
                         <div class="mini-title">Cumplimiento Global</div>
                         <div class="mini-value">{pct_global:.1f} %</div>
@@ -267,7 +271,7 @@ def render():
         with r2_c1:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #F3E8FF; color: #9333EA;">⚠️</div>
+                    <div class="mini-icon" style="background: #F3E8FF;">{icon_alert_circle('#9333EA', 20)}</div>
                     <div>
                         <div class="mini-title">Índice Gravedad (IG)</div>
                         <div class="mini-value">{ig_val:.2f}</div>
@@ -277,7 +281,7 @@ def render():
         with r2_c2:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #DCFCE7; color: #16A34A;">🎯</div>
+                    <div class="mini-icon" style="background: #DCFCE7;">{icon_check_circle('#16A34A', 20)}</div>
                     <div>
                         <div class="mini-title">Metas Cumplidas</div>
                         <div class="mini-value">{cumplen_n} / {total_ind}</div>
@@ -290,7 +294,7 @@ def render():
         with r3_c1:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #FFEDD5; color: #EA580C;">🚗</div>
+                    <div class="mini-icon" style="background: #FFEDD5;">{icon_truck('#EA580C', 20)}</div>
                     <div>
                         <div class="mini-title">Incid. Vehiculares (MCV)</div>
                         <div class="mini-value">{mcv_val:.2f}</div>
@@ -300,7 +304,7 @@ def render():
         with r3_c2:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #F1F5F9; color: #334155;">⭐</div>
+                    <div class="mini-icon" style="background: #F1F5F9;">{icon_award('#334155', 20)}</div>
                     <div>
                         <div class="mini-title">Área Líder ({sub_top_nombre[:10]})</div>
                         <div class="mini-value">{sub_top_val:.0f} %</div>
@@ -390,7 +394,7 @@ def render():
             <div class="dash-card">
                 <div class="section-header">Evolución Histórica Dinámica ({scope_lbl})</div>
                 <div class="insight-pill">
-                    💡 <b>Diagnóstico {sel_mes}:</b> Desempeño al <b>{val_sel:.1f}%</b> ({delta_sign}{delta_vs_meta:.1f}% vs Meta 80%). <b>{cumplen_n}</b> metas alcanzadas de <b>{total_ind}</b>.
+                    {icon_info('#0F766E', 15)} <b>Diagnóstico {sel_mes}:</b> Desempeño al <b>{val_sel:.1f}%</b> ({delta_sign}{delta_vs_meta:.1f}% vs Meta 80%). <b>{cumplen_n}</b> metas alcanzadas de <b>{total_ind}</b>.
                 </div>
         """, unsafe_allow_html=True)
 
@@ -431,10 +435,10 @@ def render():
                 customdata=custom_data,
                 hovertemplate=(
                     "<b>Mes: %{x}</b><br>" +
-                    "📈 Cumplimiento: <b>%{y:.1f}%</b><br>" +
-                    "🎯 Estado: <b>%{customdata[0]}</b><br>" +
-                    "📋 Indicadores: <b>%{customdata[1]}</b><br>" +
-                    "📊 Desviación: <b>%{customdata[2]}</b>" +
+                    "Cumplimiento: <b>%{y:.1f}%</b><br>" +
+                    "Estado: <b>%{customdata[0]}</b><br>" +
+                    "Indicadores: <b>%{customdata[1]}</b><br>" +
+                    "Desviación: <b>%{customdata[2]}</b>" +
                     "<extra></extra>"
                 )
             ))
@@ -527,12 +531,12 @@ def render():
 
     # SECCIÓN DE EXPORTACIÓN GERENCIAL AUTÓNOMA (PARA JEFES)
     kpis_export = [
-        {'title': 'Índice Frecuencia (IF)', 'value': f"{if_val:.2f}", 'icon': '📄', 'bg': '#E0F2FE', 'color': '#0284C7'},
-        {'title': 'Cumplimiento Global', 'value': f"{pct_global:.1f} %", 'icon': '🛡️', 'bg': '#FEF3C7', 'color': '#D97706'},
-        {'title': 'Índice Gravedad (IG)', 'value': f"{ig_val:.2f}", 'icon': '⚠️', 'bg': '#F3E8FF', 'color': '#9333EA'},
-        {'title': 'Metas Cumplidas', 'value': f"{cumplen_n} / {total_ind}", 'icon': '🎯', 'bg': '#DCFCE7', 'color': '#16A34A'},
-        {'title': 'Incid. Vehiculares (MCV)', 'value': f"{mcv_val:.2f}", 'icon': '🚗', 'bg': '#FFEDD5', 'color': '#EA580C'},
-        {'title': f'Área Líder ({sub_top_nombre[:10]})', 'value': f"{sub_top_val:.0f} %", 'icon': '⭐', 'bg': '#F1F5F9', 'color': '#334155'}
+        {'title': 'Índice Frecuencia (IF)', 'value': f"{if_val:.2f}", 'icon': icon_activity('#0284C7', 20), 'bg': '#E0F2FE', 'color': '#0284C7'},
+        {'title': 'Cumplimiento Global', 'value': f"{pct_global:.1f} %", 'icon': icon_shield_check('#D97706', 20), 'bg': '#FEF3C7', 'color': '#D97706'},
+        {'title': 'Índice Gravedad (IG)', 'value': f"{ig_val:.2f}", 'icon': icon_alert_circle('#9333EA', 20), 'bg': '#F3E8FF', 'color': '#9333EA'},
+        {'title': 'Metas Cumplidas', 'value': f"{cumplen_n} / {total_ind}", 'icon': icon_check_circle('#16A34A', 20), 'bg': '#DCFCE7', 'color': '#16A34A'},
+        {'title': 'Incid. Vehiculares (MCV)', 'value': f"{mcv_val:.2f}", 'icon': icon_truck('#EA580C', 20), 'bg': '#FFEDD5', 'color': '#EA580C'},
+        {'title': f'Área Líder ({sub_top_nombre[:10]})', 'value': f"{sub_top_val:.0f} %", 'icon': icon_award('#334155', 20), 'bg': '#F1F5F9', 'color': '#334155'}
     ]
     insight_export = f"Diagnóstico {sel_mes}: Desempeño al {val_sel:.1f}% ({delta_sign}{delta_vs_meta:.1f}% vs Meta 80%). {cumplen_n} metas alcanzadas de {total_ind}."
 
@@ -549,10 +553,10 @@ def render():
 
     c_exp_info, c_exp_btn = st.columns([2.5, 1.5])
     with c_exp_info:
-        st.caption("💡 **Para Jefes / Directivos:** Descarga un archivo HTML 100% interactivo y ligero que se abre con doble clic en cualquier equipo sin necesitar Python ni servidores.")
+        st.caption("Descarga un archivo HTML 100% interactivo para revisión gerencial autónoma.")
     with c_exp_btn:
         st.download_button(
-            label="📥 Descargar Reporte HTML (Para Jefes)",
+            label="Descargar Reporte",
             data=html_export,
             file_name=f"Reporte_HSE_Desempeno_{sel_mes}_{sel_anio}.html",
             mime="text/html",

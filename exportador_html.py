@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
 from datetime import datetime
+from iconos import icon_info
 
 def generar_html_ejecutivo(titulo: str, subtitulo: str, kpis: list, fig_gauge, fig_bar, fig_spline, fig_double, insight_txt: str = ""):
     """
@@ -19,7 +20,7 @@ def generar_html_ejecutivo(titulo: str, subtitulo: str, kpis: list, fig_gauge, f
         cards_html += f"""
         <div class="mini-card">
             <div class="mini-icon" style="background: {k.get('bg', '#F1F5F9')}; color: {k.get('color', '#334155')};">
-                {k.get('icon', '📊')}
+                {k.get('icon', '')}
             </div>
             <div>
                 <div class="mini-title">{k.get('title', '')}</div>
@@ -29,8 +30,8 @@ def generar_html_ejecutivo(titulo: str, subtitulo: str, kpis: list, fig_gauge, f
         """
 
     insight_html = f"""
-    <div class="insight-pill">
-        💡 {insight_txt}
+    <div class="insight-pill" style="display: flex; align-items: center; gap: 6px;">
+        {icon_info(color='#0F766E', size=15)} <span>{insight_txt}</span>
     </div>
     """ if insight_txt else ""
 

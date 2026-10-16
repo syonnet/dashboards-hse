@@ -5,6 +5,10 @@ import plotly.graph_objects as go
 import pandas as pd
 from .loader import load_data, get_modified_date
 from exportador_html import generar_html_ejecutivo
+from iconos import (
+    icon_shield_alert, icon_megaphone, icon_users,
+    icon_clipboard_check, icon_file_text, icon_check_square, icon_info
+)
 
 def render_gauge(val: float):
     val_clamped = max(0.0, min(100.0, float(val)))
@@ -43,7 +47,7 @@ def render_gauge(val: float):
 def render():
     df_ig, detalles, err = load_data()
     if err or df_ig is None:
-        st.error(f"⚠️ {err if err else 'No se pudieron procesar datos de Proactivos desde SharePoint'}")
+        st.error(f"{err if err else 'No se pudieron procesar datos de Proactivos desde SharePoint'}")
         return
 
     st.markdown("""
@@ -165,9 +169,9 @@ def render():
             </div>
         """, unsafe_allow_html=True)
     with col_h2:
-        btn_col, txt_col = st.columns([1, 3])
+        btn_col, txt_col = st.columns([1.2, 2.8])
         with btn_col:
-            if st.button("🔄", key="ref_proactivos", help="Recargar datos de CONTROL INDICADORES PROACTIVOS.xlsx"):
+            if st.button("Actualizar", key="ref_proactivos", help="Recargar datos de SharePoint"):
                 st.cache_data.clear()
                 st.rerun()
         with txt_col:
@@ -184,21 +188,21 @@ def render():
 
     factores_dict = {
         'Todos los Factores (Consolidado IG)': 'I G',
-        '📝 Análisis de Riesgo (ART)': 'ART',
-        '🔍 Inspecciones de Campo (OPAS)': 'OPAS',
-        '📢 Charlas Prejornada (IDPS)': 'IDPS',
-        '🛡️ Condiciones Inseguras (IDS)': 'IDS',
-        '👥 Entrenamientos (IENTS)': 'IENTS',
-        '📋 Permisos de Trabajo (OSEA)': 'OSEA',
-        '🎯 Planes de Acción (CAI)': 'CAI'
+        'Análisis de Riesgo (ART)': 'ART',
+        'Inspecciones de Campo (OPAS)': 'OPAS',
+        'Charlas Prejornada (IDPS)': 'IDPS',
+        'Condiciones Inseguras (IDS)': 'IDS',
+        'Entrenamientos (IENTS)': 'IENTS',
+        'Permisos de Trabajo (OSEA)': 'OSEA',
+        'Planes de Acción (CAI)': 'CAI'
     }
 
     with st.container(border=True):
         pfc1, pfc2 = st.columns([1.2, 2.8])
         with pfc1:
-            sel_mes = st.selectbox("🗓️ Mes de Evaluación", meses_disp, index=sel_mes_default, key="pro_mes")
+            sel_mes = st.selectbox("Mes de Evaluación", meses_disp, index=sel_mes_default, key="pro_mes")
         with pfc2:
-            sel_factor_label = st.selectbox("⚡ Enfoque / Pilar Proactivo", list(factores_dict.keys()), index=0, key="pro_factor")
+            sel_factor_label = st.selectbox("Enfoque / Pilar Proactivo", list(factores_dict.keys()), index=0, key="pro_factor")
             sel_clave = factores_dict[sel_factor_label]
 
     # Filtrar datos de proactivos para el mes
@@ -233,7 +237,7 @@ def render():
         with r1_c1:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #DCFCE7; color: #16A34A;">🛡️</div>
+                    <div class="mini-icon" style="background: #DCFCE7;">{icon_shield_alert('#16A34A', 20)}</div>
                     <div>
                         <div class="mini-title">Condiciones Inseguras (IDS)</div>
                         <div class="mini-value">{ids_pct:.1f} %</div>
@@ -243,7 +247,7 @@ def render():
         with r1_c2:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #FFEDD5; color: #EA580C;">📢</div>
+                    <div class="mini-icon" style="background: #FFEDD5;">{icon_megaphone('#EA580C', 20)}</div>
                     <div>
                         <div class="mini-title">Charlas Prejornada (IDPS)</div>
                         <div class="mini-value">{idps_pct:.1f} %</div>
@@ -255,7 +259,7 @@ def render():
         with r2_c1:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #FEE2E2; color: #DC2626;">👥</div>
+                    <div class="mini-icon" style="background: #FEE2E2;">{icon_users('#DC2626', 20)}</div>
                     <div>
                         <div class="mini-title">Personal Capacitado</div>
                         <div class="mini-value">{emp_cap}</div>
@@ -265,7 +269,7 @@ def render():
         with r2_c2:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #E0F2FE; color: #0284C7;">📝</div>
+                    <div class="mini-icon" style="background: #E0F2FE;">{icon_clipboard_check('#0284C7', 20)}</div>
                     <div>
                         <div class="mini-title">Análisis de Riesgo (ART)</div>
                         <div class="mini-value">{art_pct:.1f} %</div>
@@ -277,7 +281,7 @@ def render():
         with r3_c1:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #F3E8FF; color: #9333EA;">📋</div>
+                    <div class="mini-icon" style="background: #F3E8FF;">{icon_file_text('#9333EA', 20)}</div>
                     <div>
                         <div class="mini-title">Permisos Trabajo (OSEA)</div>
                         <div class="mini-value">{osea_pct:.1f} %</div>
@@ -287,7 +291,7 @@ def render():
         with r3_c2:
             st.markdown(f"""
                 <div class="mini-card">
-                    <div class="mini-icon" style="background: #FEF3C7; color: #D97706;">🎯</div>
+                    <div class="mini-icon" style="background: #FEF3C7;">{icon_check_square('#D97706', 20)}</div>
                     <div>
                         <div class="mini-title">Acciones Incidentes (CAI)</div>
                         <div class="mini-value">{cai_pct:.1f} %</div>
@@ -358,7 +362,7 @@ def render():
             <div class="dash-card">
                 <div class="section-header">Evolución Histórica Dinámica ({filtro_pilar_nom})</div>
                 <div class="insight-pill">
-                    💡 <b>Diagnóstico {sel_mes}:</b> Desempeño proactivo al <b>{val_sel:.1f}%</b> ({delta_sign}{delta_vs_meta:.1f}% vs Meta 80%).
+                    {icon_info(color='#0F766E', size=15)} <span><b>Diagnóstico {sel_mes}:</b> Desempeño proactivo al <b>{val_sel:.1f}%</b> ({delta_sign}{delta_vs_meta:.1f}% vs Meta 80%).</span>
                 </div>
         """, unsafe_allow_html=True)
 
@@ -391,9 +395,9 @@ def render():
                 customdata=custom_data,
                 hovertemplate=(
                     "<b>Mes: %{x}</b><br>" +
-                    "📈 Desempeño: <b>%{y:.1f}%</b><br>" +
-                    "🎯 Estado: <b>%{customdata[0]}</b><br>" +
-                    "📊 Desviación: <b>%{customdata[1]}</b>" +
+                    "Desempeño: <b>%{y:.1f}%</b><br>" +
+                    "Estado: <b>%{customdata[0]}</b><br>" +
+                    "Desviación: <b>%{customdata[1]}</b>" +
                     "<extra></extra>"
                 )
             ))
@@ -495,12 +499,12 @@ def render():
 
     # SECCIÓN DE EXPORTACIÓN GERENCIAL AUTÓNOMA (PARA JEFES)
     kpis_export = [
-        {'title': 'Condiciones Inseguras (IDS)', 'value': f"{ids_pct:.1f} %", 'icon': '🛡️', 'bg': '#DCFCE7', 'color': '#16A34A'},
-        {'title': 'Charlas Prejornada (IDPS)', 'value': f"{idps_pct:.1f} %", 'icon': '📢', 'bg': '#FFEDD5', 'color': '#EA580C'},
-        {'title': 'Personal Capacitado', 'value': f"{emp_cap}", 'icon': '👥', 'bg': '#FEE2E2', 'color': '#DC2626'},
-        {'title': 'Análisis de Riesgo (ART)', 'value': f"{art_pct:.1f} %", 'icon': '📝', 'bg': '#E0F2FE', 'color': '#0284C7'},
-        {'title': 'Permisos Trabajo (OSEA)', 'value': f"{osea_pct:.1f} %", 'icon': '📋', 'bg': '#F3E8FF', 'color': '#9333EA'},
-        {'title': 'Acciones Incidentes (CAI)', 'value': f"{cai_pct:.1f} %", 'icon': '🎯', 'bg': '#FEF3C7', 'color': '#D97706'}
+        {'title': 'Condiciones Inseguras (IDS)', 'value': f"{ids_pct:.1f} %", 'icon': icon_shield_alert('#16A34A', 20), 'bg': '#DCFCE7', 'color': '#16A34A'},
+        {'title': 'Charlas Prejornada (IDPS)', 'value': f"{idps_pct:.1f} %", 'icon': icon_megaphone('#EA580C', 20), 'bg': '#FFEDD5', 'color': '#EA580C'},
+        {'title': 'Personal Capacitado', 'value': f"{emp_cap}", 'icon': icon_users('#DC2626', 20), 'bg': '#FEE2E2', 'color': '#DC2626'},
+        {'title': 'Análisis de Riesgo (ART)', 'value': f"{art_pct:.1f} %", 'icon': icon_clipboard_check('#0284C7', 20), 'bg': '#E0F2FE', 'color': '#0284C7'},
+        {'title': 'Permisos Trabajo (OSEA)', 'value': f"{osea_pct:.1f} %", 'icon': icon_file_text('#9333EA', 20), 'bg': '#F3E8FF', 'color': '#9333EA'},
+        {'title': 'Acciones Incidentes (CAI)', 'value': f"{cai_pct:.1f} %", 'icon': icon_check_square('#D97706', 20), 'bg': '#FEF3C7', 'color': '#D97706'}
     ]
     insight_export = f"Diagnóstico {sel_mes}: Desempeño proactivo al {val_sel:.1f}% ({delta_sign}{delta_vs_meta:.1f}% vs Meta 80%)."
 
@@ -517,10 +521,10 @@ def render():
 
     c_exp_info, c_exp_btn = st.columns([2.5, 1.5])
     with c_exp_info:
-        st.caption("💡 **Para Jefes / Directivos:** Descarga un archivo HTML 100% interactivo y ligero que se abre con doble clic en cualquier equipo sin necesitar Python ni servidores.")
+        st.caption("Descarga un archivo HTML interactivo y autónomo para revisión gerencial.")
     with c_exp_btn:
         st.download_button(
-            label="📥 Descargar Reporte HTML (Para Jefes)",
+            label="Descargar Reporte",
             data=html_export,
             file_name=f"Reporte_HSE_Proactivos_{sel_mes}.html",
             mime="text/html",
