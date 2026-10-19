@@ -1,7 +1,5 @@
 """
-iconos.py - Librería de iconos vectoriales SVG limpios y profesionales.
-Basados en el estándar Lucide Icons (utilizados en diseño corporativo moderno).
-Elimina completamente la estética de emojis informales / generados por IA.
+iconos.py 
 """
 
 def _svg(content: str, color: str = "currentColor", size: int = 20, stroke_width: float = 2.0) -> str:
